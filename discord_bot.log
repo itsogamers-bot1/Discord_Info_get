@@ -1927,3 +1927,53 @@ aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing tr
 2025-02-13 14:35:45,726 [INFO] Google Sheets APIサービスの初期化が完了しました
 2025-02-13 14:35:46,015 [DEBUG] URL being requested: POST https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/join_info%21A%3AA:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&alt=json
 2025-02-13 14:35:46,045 [DEBUG] Making request: POST https://oauth2.googleapis.com/token
+2025-02-13 14:54:49,329 [WARNING] PyNaCl is not installed, voice will NOT be supported
+2025-02-13 14:54:49,331 [DEBUG] Looking up time zone info from registry
+2025-02-13 14:54:49,331 [DEBUG] on_member_update has successfully been registered as an event
+2025-02-13 14:54:49,331 [DEBUG] on_member_remove has successfully been registered as an event
+2025-02-13 14:54:49,331 [DEBUG] on_ready has successfully been registered as an event
+2025-02-13 14:54:49,333 [DEBUG] Using proactor: IocpProactor
+2025-02-13 14:54:49,333 [INFO] logging in using static token
+2025-02-13 14:54:50,463 [INFO] Shard ID None has connected to Gateway (Session ID: 683157e62b41324c4e46808622e9527a).
+2025-02-13 14:54:53,724 [INFO] === BOTの起動とログイン ===
+2025-02-13 14:54:53,724 [INFO] Bot名: AnalyticsBot#0502
+2025-02-13 14:54:53,724 [INFO] Bot ID: 1330725638591479818
+2025-02-13 14:54:53,724 [INFO] Discord.py バージョン: 2.4.0
+2025-02-13 14:54:53,726 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-13 14:54:53,727 [INFO] Added job "Discord統計情報収集" to job store "default"
+2025-02-13 14:54:53,727 [INFO] Scheduler started
+2025-02-13 14:54:53,727 [INFO] 定期実行の設定が完了しました（毎日17時0分に実行）
+2025-02-13 14:54:53,734 [DEBUG] Looking for jobs to run
+2025-02-13 14:54:53,736 [DEBUG] Next wakeup is due at 2025-02-13 17:00:00+09:00 (in 7506.263589 seconds)
+2025-02-13 14:55:40,113 [INFO] ===[START] Writing to Google Sheet "server_stats" (Spreadsheet ID: 1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI)===
+2025-02-13 14:55:40,114 [INFO] Google Sheets APIサービスの初期化を開始...
+2025-02-13 14:55:40,114 [INFO] Base64エンコードされた認証情報をデコード中...
+2025-02-13 14:55:40,114 [INFO] サービスアカウント認証情報を作成中...
+2025-02-13 14:55:40,115 [INFO] Google Sheets APIサービスを構築中...
+2025-02-13 14:55:40,121 [INFO] file_cache is only supported with oauth2client<4.0.0
+2025-02-13 14:55:40,126 [INFO] Google Sheets APIサービスの初期化が完了しました
+2025-02-13 14:55:40,364 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI?alt=json
+2025-02-13 14:55:40,388 [DEBUG] Making request: POST https://oauth2.googleapis.com/token
+2025-02-13 14:55:41,782 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/server_stats%21A%3AZ?alt=json
+2025-02-13 14:55:42,109 [INFO] シート"server_stats"の最終行: 4行目
+2025-02-13 14:55:42,109 [INFO] 次の書き込み位置: 5行目
+2025-02-13 14:55:42,137 [DEBUG] URL being requested: POST https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/server_stats%21A5:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&alt=json
+2025-02-13 14:55:42,485 [INFO] ✅ "server_stats"シートへのデータ書き込みが完了しました
+2025-02-13 14:55:42,487 [INFO] ===[COMPLETE] Successfully wrote 1 rows to server_stats===
+2025-02-13 14:55:42,487 [INFO] サーバー統計情報をGoogle Sheetsに出力しました (シート名: server_stats)
+2025-02-13 14:55:42,650 [INFO] ===[START] Writing to Google Sheet "role_stats" (Spreadsheet ID: 1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI)===
+2025-02-13 14:55:42,651 [INFO] Google Sheets APIサービスの初期化を開始...
+2025-02-13 14:55:42,651 [INFO] Base64エンコードされた認証情報をデコード中...
+2025-02-13 14:55:42,651 [INFO] サービスアカウント認証情報を作成中...
+2025-02-13 14:55:42,653 [INFO] Google Sheets APIサービスを構築中...
+2025-02-13 14:55:42,655 [INFO] file_cache is only supported with oauth2client<4.0.0
+2025-02-13 14:55:42,660 [INFO] Google Sheets APIサービスの初期化が完了しました
+2025-02-13 14:55:42,853 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI?alt=json
+2025-02-13 14:55:42,875 [DEBUG] Making request: POST https://oauth2.googleapis.com/token
+2025-02-13 14:55:44,133 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/role_stats%21A%3AZ?alt=json
+2025-02-13 14:55:44,489 [INFO] シート"role_stats"の最終行: 4行目
+2025-02-13 14:55:44,489 [INFO] 次の書き込み位置: 5行目
+2025-02-13 14:55:44,523 [DEBUG] URL being requested: POST https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/role_stats%21A5:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&alt=json
+2025-02-13 14:55:44,862 [INFO] ✅ "role_stats"シートへのデータ書き込みが完了しました
+2025-02-13 14:55:44,862 [INFO] ===[COMPLETE] Successfully wrote 1 rows to role_stats===
+2025-02-13 14:55:44,862 [INFO] ロール統計情報をGoogle Sheetsに出力しました (シート名: role_stats)
