@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.11
 WORKDIR /bot
 
 # 更新・日本語化
