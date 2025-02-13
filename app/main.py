@@ -644,7 +644,8 @@ async def on_member_remove(member):
     """メンバーが退会した際のイベントハンドラー"""
     try:
         logger.info("=== on_member_remove イベント開始 ===")
-        departed_at = datetime.now(UTC)
+        # departed_at = datetime.now(UTC)
+        departed_at = datetime.now(JST)
         departed_at_str = departed_at.strftime('%Y-%m-%d %H:%M:%S %Z')
         roles = [role.name for role in member.roles if role.name != '@everyone']
         roles_str = '、'.join(roles) if roles else 'なし'
