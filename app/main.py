@@ -24,9 +24,13 @@ from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+import dotenv
+from server import server_thread
+
 # Load environment variables
 BASE_DIR = os.getcwd()
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+# load_dotenv(os.path.join(BASE_DIR, '.env'))
+dotenv.load_dotenv()
 
 # Environment Variables Configuration
 """
@@ -768,7 +772,12 @@ async def on_ready():
     
     await process_stats()
 
+
+
 # Main execution
+
+server_thread()
+
 if __name__ == "__main__":
     if not TOKEN:
         print("エラー: 有効なトークンが見つかりませんでした。")
@@ -805,3 +814,4 @@ if __name__ == "__main__":
         print("エラー: 予期せぬ問題が発生しました")
         print(f"エラーの種類: {type(e).__name__}")
         print(f"エラーの詳細: {str(e)}")
+
