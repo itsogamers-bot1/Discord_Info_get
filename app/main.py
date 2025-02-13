@@ -777,7 +777,6 @@ async def on_ready():
 
 # Main execution
 
-server_thread()
 
 # if __name__ == "__main__":
 #     if not TOKEN:
@@ -796,6 +795,7 @@ server_thread()
 #         sys.exit(1)
         
 # server_id = os.getenv("MONITOR_GUILD_ID")
+server_thread()
 server_id = MONITOR_GUILD_ID
 TOKEN = DISCORD_BOT_TOKEN
 if not server_id:

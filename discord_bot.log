@@ -1977,3 +1977,73 @@ aiohttp.client_exceptions.ClientConnectionResetError: Cannot write to closing tr
 2025-02-13 14:55:44,862 [INFO] ✅ "role_stats"シートへのデータ書き込みが完了しました
 2025-02-13 14:55:44,862 [INFO] ===[COMPLETE] Successfully wrote 1 rows to role_stats===
 2025-02-13 14:55:44,862 [INFO] ロール統計情報をGoogle Sheetsに出力しました (シート名: role_stats)
+2025-02-13 16:00:57,531 [WARNING] PyNaCl is not installed, voice will NOT be supported
+2025-02-13 16:00:57,533 [DEBUG] Looking up time zone info from registry
+2025-02-13 16:00:57,534 [DEBUG] on_member_update has successfully been registered as an event
+2025-02-13 16:00:57,534 [DEBUG] on_member_remove has successfully been registered as an event
+2025-02-13 16:00:57,534 [DEBUG] on_ready has successfully been registered as an event
+2025-02-13 16:00:57,536 [DEBUG] Using proactor: IocpProactor
+2025-02-13 16:00:57,539 [INFO] logging in using static token
+2025-02-13 16:00:57,543 [DEBUG] Using proactor: IocpProactor
+2025-02-13 16:00:58,744 [INFO] Shard ID None has connected to Gateway (Session ID: 68f9e43fff507ac94a42e7845c9e9577).
+2025-02-13 16:01:01,695 [INFO] === BOTの起動とログイン ===
+2025-02-13 16:01:01,695 [INFO] Bot名: AnalyticsBot#0502
+2025-02-13 16:01:01,695 [INFO] Bot ID: 1330725638591479818
+2025-02-13 16:01:01,695 [INFO] Discord.py バージョン: 2.4.0
+2025-02-13 16:01:01,697 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-13 16:01:01,700 [INFO] Added job "Discord統計情報収集" to job store "default"
+2025-02-13 16:01:01,700 [INFO] Scheduler started
+2025-02-13 16:01:01,701 [INFO] 定期実行の設定が完了しました（毎日17時0分に実行）
+2025-02-13 16:01:01,709 [DEBUG] Looking for jobs to run
+2025-02-13 16:01:01,709 [DEBUG] Next wakeup is due at 2025-02-13 17:00:00+09:00 (in 3538.290869 seconds)
+2025-02-13 16:08:36,874 [WARNING] PyNaCl is not installed, voice will NOT be supported
+2025-02-13 16:08:36,874 [DEBUG] Looking up time zone info from registry
+2025-02-13 16:08:36,876 [DEBUG] on_member_update has successfully been registered as an event
+2025-02-13 16:08:36,876 [DEBUG] on_member_remove has successfully been registered as an event
+2025-02-13 16:08:36,876 [DEBUG] on_ready has successfully been registered as an event
+2025-02-13 16:08:36,877 [DEBUG] Using proactor: IocpProactor
+2025-02-13 16:08:36,879 [INFO] logging in using static token
+2025-02-13 16:08:36,884 [DEBUG] Using proactor: IocpProactor
+2025-02-13 16:08:38,251 [INFO] Shard ID None has connected to Gateway (Session ID: b230de20ccd3a7a7186b656a0ceb6d8a).
+2025-02-13 16:08:41,455 [INFO] === BOTの起動とログイン ===
+2025-02-13 16:08:41,455 [INFO] Bot名: AnalyticsBot#0502
+2025-02-13 16:08:41,457 [INFO] Bot ID: 1330725638591479818
+2025-02-13 16:08:41,457 [INFO] Discord.py バージョン: 2.4.0
+2025-02-13 16:08:41,458 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-13 16:08:41,460 [INFO] Added job "Discord統計情報収集" to job store "default"
+2025-02-13 16:08:41,460 [INFO] Scheduler started
+2025-02-13 16:08:41,460 [INFO] 定期実行の設定が完了しました（毎日17時0分に実行）
+2025-02-13 16:08:41,467 [DEBUG] Looking for jobs to run
+2025-02-13 16:08:41,467 [DEBUG] Next wakeup is due at 2025-02-13 17:00:00+09:00 (in 3078.532616 seconds)
+2025-02-13 16:09:23,471 [INFO] ===[START] Writing to Google Sheet "server_stats" (Spreadsheet ID: 1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI)===
+2025-02-13 16:09:23,471 [INFO] Google Sheets APIサービスの初期化を開始...
+2025-02-13 16:09:23,471 [INFO] Base64エンコードされた認証情報をデコード中...
+2025-02-13 16:09:23,472 [INFO] サービスアカウント認証情報を作成中...
+2025-02-13 16:09:23,474 [INFO] Google Sheets APIサービスを構築中...
+2025-02-13 16:09:23,477 [INFO] file_cache is only supported with oauth2client<4.0.0
+2025-02-13 16:09:23,482 [INFO] Google Sheets APIサービスの初期化が完了しました
+2025-02-13 16:09:23,693 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI?alt=json
+2025-02-13 16:09:23,716 [DEBUG] Making request: POST https://oauth2.googleapis.com/token
+2025-02-13 16:09:25,228 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/server_stats%21A%3AZ?alt=json
+2025-02-13 16:09:25,470 [INFO] シート"server_stats"の最終行: 5行目
+2025-02-13 16:09:25,470 [INFO] 次の書き込み位置: 6行目
+2025-02-13 16:09:25,503 [DEBUG] URL being requested: POST https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/server_stats%21A6:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&alt=json
+2025-02-13 16:09:25,890 [INFO] ✅ "server_stats"シートへのデータ書き込みが完了しました
+2025-02-13 16:09:25,890 [INFO] ===[COMPLETE] Successfully wrote 1 rows to server_stats===
+2025-02-13 16:09:25,892 [INFO] サーバー統計情報をGoogle Sheetsに出力しました (シート名: server_stats)
+2025-02-13 16:09:26,006 [INFO] ===[START] Writing to Google Sheet "role_stats" (Spreadsheet ID: 1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI)===
+2025-02-13 16:09:26,007 [INFO] Google Sheets APIサービスの初期化を開始...
+2025-02-13 16:09:26,007 [INFO] Base64エンコードされた認証情報をデコード中...
+2025-02-13 16:09:26,007 [INFO] サービスアカウント認証情報を作成中...
+2025-02-13 16:09:26,009 [INFO] Google Sheets APIサービスを構築中...
+2025-02-13 16:09:26,011 [INFO] file_cache is only supported with oauth2client<4.0.0
+2025-02-13 16:09:26,015 [INFO] Google Sheets APIサービスの初期化が完了しました
+2025-02-13 16:09:26,228 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI?alt=json
+2025-02-13 16:09:26,250 [DEBUG] Making request: POST https://oauth2.googleapis.com/token
+2025-02-13 16:09:27,258 [DEBUG] URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/role_stats%21A%3AZ?alt=json
+2025-02-13 16:09:27,493 [INFO] シート"role_stats"の最終行: 5行目
+2025-02-13 16:09:27,493 [INFO] 次の書き込み位置: 6行目
+2025-02-13 16:09:27,524 [DEBUG] URL being requested: POST https://sheets.googleapis.com/v4/spreadsheets/1kXqyTEM-qAsW9KFzGdCify2auSXdDGfLKU9q5nx2-SI/values/role_stats%21A6:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&alt=json
+2025-02-13 16:09:27,817 [INFO] ✅ "role_stats"シートへのデータ書き込みが完了しました
+2025-02-13 16:09:27,817 [INFO] ===[COMPLETE] Successfully wrote 1 rows to role_stats===
+2025-02-13 16:09:27,819 [INFO] ロール統計情報をGoogle Sheetsに出力しました (シート名: role_stats)
