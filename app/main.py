@@ -58,6 +58,7 @@ Required Environment Variables:
 """
 
 # Discord Configuration
+DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 MONITOR_GUILD_ID = int(os.getenv('MONITOR_GUILD_ID'))
 OUTPUT_GUILD_ID = int(os.getenv('OUTPUT_GUILD_ID'))
 OUTPUT_CHANNEL_ID = int(os.getenv('OUTPUT_CHANNEL_ID'))
@@ -778,40 +779,42 @@ async def on_ready():
 
 server_thread()
 
-if __name__ == "__main__":
-    if not TOKEN:
-        print("エラー: 有効なトークンが見つかりませんでした。")
-        print("\n環境変数の状態:")
-        for var in ["DISCORD_BOT_TOKEN", "Token", "ID", "URL"]:
-            value = os.getenv(var)
-            if value:
-                if var == "URL":
-                    print(f"- {var}: {value}")
-                else:
-                    masked_value = value[:6] + "*" * (len(value) - 6) if len(value) > 6 else "***"
-                    print(f"- {var}: {masked_value}")
-            else:
-                print(f"- {var}: 未設定")
-        sys.exit(1)
+# if __name__ == "__main__":
+#     if not TOKEN:
+#         print("エラー: 有効なトークンが見つかりませんでした。")
+#         print("\n環境変数の状態:")
+#         for var in ["DISCORD_BOT_TOKEN", "Token", "ID", "URL"]:
+#             value = os.getenv(var)
+#             if value:
+#                 if var == "URL":
+#                     print(f"- {var}: {value}")
+#                 else:
+#                     masked_value = value[:6] + "*" * (len(value) - 6) if len(value) > 6 else "***"
+#                     print(f"- {var}: {masked_value}")
+#             else:
+#                 print(f"- {var}: 未設定")
+#         sys.exit(1)
         
-    server_id = os.getenv("MONITOR_GUILD_ID")
-    if not server_id:
-        print("警告: MONITOR_GUILD_IDが設定されていません。すべてのサーバーのメッセージを処理します。")
-    
-    try:
-        print(f"Botを起動しています...")
-        bot.run(TOKEN)
-    except discord.LoginFailure as e:
-        print("\n=== ログインエラー ===")
-        print("エラー: Discordへのログインに失敗しました")
-        print(f"\nエラーの詳細: {str(e)}")
-    except discord.HTTPException as e:
-        print("\n=== 接続エラー ===")
-        print("エラー: Discord APIとの通信に失敗しました")
-        print(f"\nエラーの詳細: {str(e)}")
-    except Exception as e:
-        print("\n=== システムエラー ===")
-        print("エラー: 予期せぬ問題が発生しました")
-        print(f"エラーの種類: {type(e).__name__}")
-        print(f"エラーの詳細: {str(e)}")
+# server_id = os.getenv("MONITOR_GUILD_ID")
+server_id = MONITOR_GUILD_ID
+TOKEN = DISCORD_BOT_TOKEN
+if not server_id:
+    print("警告: MONITOR_GUILD_IDが設定されていません。すべてのサーバーのメッセージを処理します。")
+
+try:
+    print(f"Botを起動しています...")
+    bot.run(TOKEN)
+except discord.LoginFailure as e:
+    print("\n=== ログインエラー ===")
+    print("エラー: Discordへのログインに失敗しました")
+    print(f"\nエラーの詳細: {str(e)}")
+except discord.HTTPException as e:
+    print("\n=== 接続エラー ===")
+    print("エラー: Discord APIとの通信に失敗しました")
+    print(f"\nエラーの詳細: {str(e)}")
+except Exception as e:
+    print("\n=== システムエラー ===")
+    print("エラー: 予期せぬ問題が発生しました")
+    print(f"エラーの種類: {type(e).__name__}")
+    print(f"エラーの詳細: {str(e)}")
 
