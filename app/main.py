@@ -714,7 +714,8 @@ async def write_voluntary_leaves_to_sheet() -> bool:
         return False
     
     data_rows = []
-    headers = ['タイムスタンプ', 'ユーザーID', 'ユーザー名', '退会前のロール']
+    # headers = ['タイムスタンプ', 'ユーザーID', 'ユーザー名', '退会前のロール']
+    headers = ['timestamp', 'user_id', 'user_name', 'roles']
     
     try:
         with open(VOLUNTARY_LEAVES_FILE, 'r', encoding='utf-8') as f:
@@ -731,6 +732,7 @@ async def write_voluntary_leaves_to_sheet() -> bool:
                     row['user_name'],
                     row['roles']
                 ])
+    
     except Exception as e:
         logger.error(f"自主退会者CSVの読み込み中にエラーが発生しました: {e}")
         return False
