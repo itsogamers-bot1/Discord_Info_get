@@ -725,27 +725,27 @@ async def write_voluntary_leaves_to_sheet() -> bool:
             for row in csv_reader:
                 last_row = row # added 02/19
 
-                timestamp = datetime.fromisoformat(row['timestamp'])
-                if timestamp.tzinfo is None:
-                    timestamp = timestamp.replace(tzinfo=UTC)
-                jst_timestamp = timestamp.astimezone(JST)
-                
-                # removed 02/19
-                # data_rows.append([
-                #     jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                #     row['user_id'],
-                #     row['user_name'],
-                #     row['roles']
-                # ])
+            timestamp = datetime.fromisoformat(row['timestamp'])
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=UTC)
+            jst_timestamp = timestamp.astimezone(JST)
+            
+            # removed 02/19
+            # data_rows.append([
+            #     jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            #     row['user_id'],
+            #     row['user_name'],
+            #     row['roles']
+            # ])
 
-                # added 02/19
-                # Format the last row data
-                data_row = [
-                    jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                    last_row['user_id'],
-                    last_row['user_name'],
-                    last_row['roles']
-                ]
+            # added 02/19
+            # Format the last row data
+            data_row = [
+                jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                last_row['user_id'],
+                last_row['user_name'],
+                last_row['roles']
+            ]
     
     except Exception as e:
         logger.error(f"自主退会者CSVの読み込み中にエラーが発生しました: {e}")
@@ -753,7 +753,7 @@ async def write_voluntary_leaves_to_sheet() -> bool:
     
     sheet_name = "退会者統計"
     # return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, data_rows, headers=headers) # removed 02/19
-    return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, data_row, headers=headers) # added 02/19
+    return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, [data_row], headers=headers) # added 02/19
 
 @bot.event
 async def on_ready():
