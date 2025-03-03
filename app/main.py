@@ -86,9 +86,9 @@ SCHEDULE_MINUTE = int(os.getenv('SCHEDULE_MINUTE', '0'))
 # Constants
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
-VOLUNTARY_LEAVES_FILE = os.path.join(BASE_DIR, VOLUNTARY_LEAVES_SHEET_NAME + '.csv')
-ROLE_STATS_FILE = os.path.join(BASE_DIR, ROLE_STATS_SHEET_NAME + '.csv')
-SERVER_STATS_FILE = os.path.join(BASE_DIR, SERVER_STATS_SHEET_NAME + '.csv')
+# VOLUNTARY_LEAVES_FILE = os.path.join(BASE_DIR, VOLUNTARY_LEAVES_SHEET_NAME + '.csv')
+# ROLE_STATS_FILE = os.path.join(BASE_DIR, ROLE_STATS_SHEET_NAME + '.csv')
+# SERVER_STATS_FILE = os.path.join(BASE_DIR, SERVER_STATS_SHEET_NAME + '.csv')
 LOG_FILE = os.path.join(BASE_DIR, 'discord_bot.log')
 
 # Initialize logging
@@ -207,6 +207,61 @@ def find_last_row_in_sheet(service, spreadsheet_id: str, sheet_name: str) -> int
         logger.error(f'最終行の取得に失敗しました: {e}')
         logger.warning('安全のため、1行目から書き込みを開始します。')
         return 1
+
+# V1! 
+# def read_from_sheet(spreadsheet_id: str, sheet_name: str) -> List[List[str]]:
+#     """Google Sheetsからデータを読み込む"""
+#     try:
+#         logger.info(f'===[START] Reading from Google Sheet "{sheet_name}" (Spreadsheet ID: {spreadsheet_id})===')
+
+#         service = get_google_sheets_service()
+#         if not service:
+#             logger.error('Google Sheetsサービスの初期化に失敗したため、データを読み込めません')
+#             return []
+
+#         # シートデータを取得
+#         range_name = f"{sheet_name}"
+#         result = service.spreadsheets().values().get(
+#             spreadsheetId=spreadsheet_id,
+#             range=range_name
+#         ).execute()
+
+#         values = result.get('values', [])
+#         if not values:
+#             logger.warning(f'⚠ シート"{sheet_name}"は空です')
+#             return []
+
+#         # 1行目（ヘッダー）をスキップ
+#         data = values[1:] if len(values) > 1 else []
+
+#         logger.info(f'✅ {len(data)}行のデータを取得しました')
+#         logger.info(f'===[COMPLETE] Successfully read {len(data)} rows from {sheet_name}===')
+
+#         return data
+
+#     except HttpError as e:
+#         logger.error(f'✖ Google Sheetsからの読み込み中にエラーが発生しました: {e}')
+#         logger.error(f'===[FAILED] Failed to read from {sheet_name}===')
+#         return []
+
+def read_from_sheet(spreadsheet_id: str, sheet_name: str) -> List[List[str]]:
+    """指定したGoogleスプレッドシートのシートからデータを取得"""
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            return []
+
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=sheet_name
+        ).execute()
+
+        return result.get('values', [])  # 2Dリストをそのまま返す
+
+    except HttpError as e:
+        print(f"Google Sheets 読み込みエラー: {e}")
+        return []
+
 
 def write_to_sheet_general(target_spreadsheet_id: str, sheet_name: str, values: List[List[Any]], range_name: Optional[str] = None, headers: Optional[List[str]] = None) -> bool:
     """指定されたスプレッドシートの指定シートにデータを書き込む"""
@@ -370,7 +425,7 @@ async def get_guild_stats():
                 while True:
                     entries = []
                     try:
-                        async for entry in guild.audit_logs(action=action, limit=100, after=after):
+                        async for entry in guild.audit_logs(action=action, limit=None, after=after):
                             entries.append(entry)
                     except discord.Forbidden:
                         logger.warning(f'監査ログ（{action.name}）へのアクセス権限がありません')
@@ -402,35 +457,71 @@ async def get_guild_stats():
             logger.warning('監査ログへのアクセス権限がありません')
             forced_leave_ids.clear()
 
-        # 自主退会の確認（CSVファイルから）
-        if os.path.exists(VOLUNTARY_LEAVES_FILE):
-            try:
-                with open(VOLUNTARY_LEAVES_FILE, 'r', encoding='utf-8') as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        try:
-                            leave_time = datetime.fromisoformat(row['timestamp'])
-                            if leave_time.tzinfo is None:
-                                leave_time = leave_time.replace(tzinfo=UTC)
+        # # 自主退会の確認（CSVファイルから）
+        # if os.path.exists(VOLUNTARY_LEAVES_FILE):
+        #     try:
+        #         with open(VOLUNTARY_LEAVES_FILE, 'r', encoding='utf-8') as f:
+        #             reader = csv.DictReader(f)
+        #             for row in reader:
+        #                 try:
+        #                     leave_time = datetime.fromisoformat(row['timestamp'])
+        #                     if leave_time.tzinfo is None:
+        #                         leave_time = leave_time.replace(tzinfo=UTC)
                             
-                            user_id = row['user_id']
+        #                     user_id = row['user_id']
                             
-                            if yesterday_start <= leave_time <= yesterday_end:
-                                if user_id not in forced_leave_ids:
-                                    voluntary_leave_count += 1
-                        except (ValueError, KeyError) as e:
-                            logger.error(f"退会データの解析中にエラーが発生しました: {e}")
-                            continue
-            except Exception as e:
-                logger.error(f"{VOLUNTARY_LEAVES_FILE} の読み込み中にエラーが発生しました: {e}")
+        #                     if yesterday_start <= leave_time <= yesterday_end:
+        #                         if user_id not in forced_leave_ids:
+        #                             voluntary_leave_count += 1
+        #                 except (ValueError, KeyError) as e:
+        #                     logger.error(f"退会データの解析中にエラーが発生しました: {e}")
+        #                     continue
+        #     except Exception as e:
+        #         logger.error(f"{VOLUNTARY_LEAVES_FILE} の読み込み中にエラーが発生しました: {e}")
+
+        """Google Sheetsから自主退会データを読み込み、前日の退会者数をカウントする"""
+        if not SHEETS_ENABLED:
+            logger.warning("Google Sheetsが有効になっていません。")
+            return
         
+        try:
+            sheet_data = read_from_sheet(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME)
+            if not sheet_data or len(sheet_data) < 2:
+                logger.warning(f"シート {VOLUNTARY_LEAVES_SHEET_NAME} にデータがありません。")
+                return
+            
+            header = sheet_data[0]  # ヘッダー行
+            rows = sheet_data[1:]   # データ行
+            timestamp_index = header.index('timestamp')
+            user_id_index = header.index('user_id')
+
+            voluntary_leave_count = 0
+            for row in rows:
+                try:
+                    leave_time = datetime.fromisoformat(row[timestamp_index])
+                    if leave_time.tzinfo is None:
+                        leave_time = leave_time.replace(tzinfo=UTC)
+
+                    user_id = row[user_id_index]
+                    if yesterday_start <= leave_time <= yesterday_end:
+                        if user_id not in forced_leave_ids:
+                            voluntary_leave_count += 1
+                except (ValueError, IndexError) as e:
+                    logger.error(f"退会データの解析中にエラーが発生しました: {e}")
+                    continue
+
+            logger.info(f"昨日の自主退会者数: {voluntary_leave_count}")
+
+        except Exception as e:
+            logger.error(f"Google Sheets ({VOLUNTARY_LEAVES_SHEET_NAME}) の読み込み中にエラーが発生しました: {e}")
+
         leave_count = voluntary_leave_count + forced_leave_count
         
         # アクティブメンバー数の取得
         active_members = set()
         for channel in guild.text_channels:
             try:
-                async for message in channel.history(limit=100, after=yesterday_start, before=yesterday_end):
+                async for message in channel.history(limit=None, after=yesterday_start, before=yesterday_end):
                     if not message.author.bot:
                         active_members.add(message.author.id)
             except discord.Forbidden:
@@ -452,90 +543,184 @@ async def get_guild_stats():
         logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
         return None
 
+# async def get_role_stats(guild: discord.Guild):
+#     """サーバー内のロールごとのメンバー数をCSVに出力する"""
+#     try:
+#         current_date = (datetime.now(JST) - timedelta(days=1)).strftime('%Y-%m-%d')
+#         csv_filename = ROLE_STATS_FILE
+        
+#         role_data = {}
+#         for role in guild.roles:
+#             if not role.is_default():
+#                 role_data[role.name] = len(role.members)
+        
+#         fieldnames = ['Date'] + sorted(role_data.keys())
+#         new_file = not os.path.exists(csv_filename)
+        
+#         current_data = {'Date': current_date}
+#         current_data.update(role_data)
+
+#         if SHEETS_ENABLED:
+#             sheet_data = [
+#                 [current_date] + [role_data[role] for role in sorted(role_data.keys())]
+#             ]
+            
+#             sheet_name = ROLE_STATS_SHEET_NAME
+#             if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
+#                 logger.info(f'ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+#             else:
+#                 logger.warning('Google Sheetsへの書き込みに失敗しました')
+
+#         with open(csv_filename, "a", newline="", encoding="utf-8") as csvfile:
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#             if new_file:
+#                 writer.writeheader()
+#             writer.writerow(current_data)
+
+
+#         return True
+
+#     except Exception as e:
+#         logger.error(f'エラー: ロール統計情報の処理中にエラーが発生しました: {e}')
+#         return False
+
 async def get_role_stats(guild: discord.Guild):
-    """サーバー内のロールごとのメンバー数をCSVに出力する"""
+    """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する"""
     try:
         current_date = (datetime.now(JST) - timedelta(days=1)).strftime('%Y-%m-%d')
-        csv_filename = ROLE_STATS_FILE
         
-        role_data = {}
-        for role in guild.roles:
-            if not role.is_default():
-                role_data[role.name] = len(role.members)
+        # ロールのメンバー数を取得
+        role_data = {role.name: len(role.members) for role in guild.roles if not role.is_default()}
         
-        fieldnames = ['Date'] + sorted(role_data.keys())
-        new_file = not os.path.exists(csv_filename)
+        # シートに書き込むデータの準備
+        fieldnames = ['Date'] + sorted(role_data.keys())  # ヘッダー
+        sheet_data = [[current_date] + [role_data[role] for role in sorted(role_data.keys())]]
         
-        current_data = {'Date': current_date}
-        current_data.update(role_data)
-
-        if SHEETS_ENABLED:
-            sheet_data = [
-                [current_date] + [role_data[role] for role in sorted(role_data.keys())]
-            ]
-            
-            sheet_name = ROLE_STATS_SHEET_NAME
-            if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
-                logger.info(f'ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
-            else:
-                logger.warning('Google Sheetsへの書き込みに失敗しました')
-
-        with open(csv_filename, "a", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            if new_file:
-                writer.writeheader()
-            writer.writerow(current_data)
-
+        # Google Sheets に書き込み
+        sheet_name = ROLE_STATS_SHEET_NAME
+        if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
+            logger.info(f'✅ ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+        else:
+            logger.warning('⚠ Google Sheetsへの書き込みに失敗しました')
 
         return True
 
     except Exception as e:
-        logger.error(f'エラー: ロール統計情報の処理中にエラーが発生しました: {e}')
+        logger.error(f'✖ ロール統計情報の処理中にエラーが発生しました: {e}')
         return False
 
+
+# async def process_stats(ctx=None):
+#     """統計情報の収集、CSV出力、送信を行う"""
+#     try:
+#         if ctx:
+#             await ctx.send('Discord APIに接続しています...')
+#         stats = await get_guild_stats()
+        
+#         if stats is None:
+#             error_msg = ('エラー: Discord APIからの統計情報の取得に失敗しました。')
+#             if ctx:
+#                 await ctx.send(error_msg)
+#             return
+            
+#         fieldnames = ['Date', 'Total Members', 'New Members', 'Total Leaves', 'Voluntary Leaves', 'Forced Leaves', 'Active Members']
+#         row_data = {
+#             'Date': stats['date'],
+#             'Total Members': stats['current_members'],
+#             'New Members': stats['new_members'],
+#             'Total Leaves': stats['left_members'],
+#             'Voluntary Leaves': stats['voluntary_leaves'],
+#             'Forced Leaves': stats['forced_leaves'],
+#             'Active Members': stats['active_members']
+#         }
+
+#         # csv_filename = SERVER_STATS_FILE
+#         new_file = not os.path.exists(csv_filename)
+#         with open(csv_filename, "a", newline="", encoding="utf-8") as csvfile:
+#             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#             if new_file:
+#                 writer.writeheader()
+#             writer.writerow(row_data)
+
+#         if SHEETS_ENABLED:
+#             sheet_data = [list(row_data.values())]
+#             sheet_name = SERVER_STATS_SHEET_NAME
+#             if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
+#                 logger.info(f'サーバー統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+
+#         monitor_guild_id = MONITOR_GUILD_ID
+#         guild = bot.get_guild(monitor_guild_id)
+#         if guild:
+#             await get_role_stats(guild)
+
+#         message = (
+#             f"【Discordサーバー統計情報】\n"
+#             f"日付: {stats['date']}\n\n"
+#             f"1. サーバー状況\n"
+#             f"   - 現在のメンバー数: {stats['current_members']}人\n"
+#             f"   - 新規参加者数: {stats['new_members']}人\n"
+#             f"   - 退会者数: {stats['left_members']}人\n"
+#             f"     ├ 自主退会: {stats['voluntary_leaves']}人\n"
+#             f"     └ 強制退会: {stats['forced_leaves']}人\n"
+#             f"   - アクティブメンバー数: {stats['active_members']}人\n\n"
+#             f"※このメッセージは自動生成されています。"
+#         )
+        
+#         if ctx:
+#             await ctx.send(message)
+#         else:
+#             output_guild_id = OUTPUT_GUILD_ID
+#             output_channel_id = OUTPUT_CHANNEL_ID
+#             output_guild = bot.get_guild(output_guild_id)
+            
+#             if output_guild:
+#                 channel = output_guild.get_channel(output_channel_id)
+#                 if channel:
+#                     await channel.send(message)
+    
+#     except Exception as e:
+#         logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
+
 async def process_stats(ctx=None):
-    """統計情報の収集、CSV出力、送信を行う"""
+    """統計情報の収集、Google Sheets出力、送信を行う"""
     try:
         if ctx:
             await ctx.send('Discord APIに接続しています...')
-        stats = await get_guild_stats()
         
+        stats = await get_guild_stats()
         if stats is None:
-            error_msg = ('エラー: Discord APIからの統計情報の取得に失敗しました。')
+            error_msg = 'エラー: Discord APIからの統計情報の取得に失敗しました。'
             if ctx:
                 await ctx.send(error_msg)
             return
-            
+
+        # シートに保存するデータ
         fieldnames = ['Date', 'Total Members', 'New Members', 'Total Leaves', 'Voluntary Leaves', 'Forced Leaves', 'Active Members']
-        row_data = {
-            'Date': stats['date'],
-            'Total Members': stats['current_members'],
-            'New Members': stats['new_members'],
-            'Total Leaves': stats['left_members'],
-            'Voluntary Leaves': stats['voluntary_leaves'],
-            'Forced Leaves': stats['forced_leaves'],
-            'Active Members': stats['active_members']
-        }
+        sheet_data = [[
+            stats['date'],
+            stats['current_members'],
+            stats['new_members'],
+            stats['left_members'],
+            stats['voluntary_leaves'],
+            stats['forced_leaves'],
+            stats['active_members']
+        ]]
 
-        csv_filename = SERVER_STATS_FILE
-        new_file = not os.path.exists(csv_filename)
-        with open(csv_filename, "a", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            if new_file:
-                writer.writeheader()
-            writer.writerow(row_data)
-
+        # Google Sheets に書き込み
         if SHEETS_ENABLED:
-            sheet_data = [list(row_data.values())]
             sheet_name = SERVER_STATS_SHEET_NAME
             if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
-                logger.info(f'サーバー統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+                logger.info(f'✅ サーバー統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+            else:
+                logger.warning('⚠ Google Sheetsへの書き込みに失敗しました')
 
+        # ロール統計情報も収集
         monitor_guild_id = MONITOR_GUILD_ID
         guild = bot.get_guild(monitor_guild_id)
         if guild:
             await get_role_stats(guild)
 
+        # Discordメッセージを送信
         message = (
             f"【Discordサーバー統計情報】\n"
             f"日付: {stats['date']}\n\n"
@@ -548,21 +733,20 @@ async def process_stats(ctx=None):
             f"   - アクティブメンバー数: {stats['active_members']}人\n\n"
             f"※このメッセージは自動生成されています。"
         )
-        
+
         if ctx:
             await ctx.send(message)
         else:
             output_guild_id = OUTPUT_GUILD_ID
             output_channel_id = OUTPUT_CHANNEL_ID
             output_guild = bot.get_guild(output_guild_id)
-            
             if output_guild:
                 channel = output_guild.get_channel(output_channel_id)
                 if channel:
                     await channel.send(message)
-    
+
     except Exception as e:
-        logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
+        logger.error(f'✖ エラー: 予期せぬエラーが発生しました: {e}')
 
 # Bot Event Handlers
 @bot.command(name='stats')
@@ -704,35 +888,136 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             error_message=error_message
         )
 
+# @bot.event
+# async def on_member_remove(member):
+#     """メンバーが退会した際のイベントハンドラー"""
+#     try:
+#         logger.info("=== on_member_remove イベント開始 ===")
+#         # departed_at = datetime.now(UTC)
+#         departed_at = datetime.now(JST)
+#         departed_at_str = departed_at.strftime('%Y-%m-%d %H:%M:%S %Z')
+#         roles = [role.name for role in member.roles if role.name != '@everyone']
+#         roles_str = '、'.join(roles) if roles else 'なし'
+
+#         file_exists = os.path.exists(VOLUNTARY_LEAVES_FILE)
+#         try:
+#             with open(VOLUNTARY_LEAVES_FILE, 'a', newline='', encoding='utf-8') as f:
+#                 writer = csv.writer(f)
+#                 if not file_exists:
+#                     writer.writerow(['timestamp', 'user_id', 'user_name', 'roles'])
+#                 writer.writerow([
+#                     departed_at.isoformat(),
+#                     str(member.id),
+#                     member.name,
+#                     roles_str
+#                 ])
+            
+#             if SHEETS_ENABLED:
+#                 await write_voluntary_leaves_to_sheet()
+#         except Exception as e:
+#             logger.error(f"退会情報のCSV記録中にエラーが発生しました: {e}")
+
+#         log_message = [
+#             '【メンバー退会情報】',
+#             f'ユーザー名: {member.name}',
+#             f'ユーザーID: {member.id}',
+#             f'退会日時: {departed_at_str}',
+#             f'保持していたロール: {roles_str}'
+#         ]
+
+#         try:
+#             async for entry in member.guild.audit_logs(action=discord.AuditLogAction.kick, limit=1):
+#                 if entry.target.id == member.id:
+#                     log_message.extend([
+#                         '退会種別: キック',
+#                         f'実行者: {entry.user.name}'
+#                     ])
+#                     if entry.reason:
+#                         log_message.append(f'理由: {entry.reason}')
+#                     break
+#             else:
+#                 log_message.append('退会種別: 自主退会')
+#         except discord.Forbidden:
+#             log_message.append('警告: 監査ログへのアクセス権限がありません')
+
+#         try:
+#             output_guild_id = OUTPUT_GUILD_ID
+#             output_channel_id = OUTPUT_CHANNEL_ID
+#             output_guild = bot.get_guild(output_guild_id)
+            
+#             if output_guild:
+#                 channel = output_guild.get_channel(output_channel_id)
+#                 if channel:
+#                     await channel.send('\n'.join(log_message))
+#         except Exception as e:
+#             logger.error(f'エラー: メッセージの送信中にエラーが発生しました: {e}')
+
+#     except Exception as e:
+#         logger.error(f'エラー: 退会情報の処理中にエラーが発生しました: {e}')
+
+# async def write_voluntary_leaves_to_sheet() -> bool:
+#     """自主退会者情報を専用のスプレッドシートに出力する"""
+#     logger.info("=== 自主退会者スプレッドシートへの出力開始 ===")
+    
+#     if not SHEETS_ENABLED or not MERGED_SHEET_ID or not os.path.exists(VOLUNTARY_LEAVES_FILE):
+#         return False
+    
+#     # data_rows = [] # removed 02/19
+#     # headers = ['タイムスタンプ', 'ユーザーID', 'ユーザー名', '退会前のロール']
+#     headers = ['timestamp', 'user_id', 'user_name', 'roles']
+    
+#     try:
+#         with open(VOLUNTARY_LEAVES_FILE, 'r', encoding='utf-8') as f:
+#             csv_reader = csv.DictReader(f)
+#             last_row = None # added 02/19
+
+#             for row in csv_reader:
+#                 last_row = row # added 02/19
+
+#             timestamp = datetime.fromisoformat(row['timestamp'])
+#             if timestamp.tzinfo is None:
+#                 timestamp = timestamp.replace(tzinfo=UTC)
+#             jst_timestamp = timestamp.astimezone(JST)
+            
+#             # removed 02/19
+#             # data_rows.append([
+#             #     jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+#             #     row['user_id'],
+#             #     row['user_name'],
+#             #     row['roles']
+#             # ])
+
+#             # added 02/19
+#             # Format the last row data
+#             data_row = [
+#                 jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+#                 last_row['user_id'],
+#                 last_row['user_name'],
+#                 last_row['roles']
+#             ]
+    
+#     except Exception as e:
+#         logger.error(f"自主退会者CSVの読み込み中にエラーが発生しました: {e}")
+#         return False
+    
+#     sheet_name = "退会者統計"
+#     # return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, data_rows, headers=headers) # removed 02/19
+#     return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, [data_row], headers=headers) # added 02/19
+
 @bot.event
 async def on_member_remove(member):
     """メンバーが退会した際のイベントハンドラー"""
     try:
         logger.info("=== on_member_remove イベント開始 ===")
-        # departed_at = datetime.now(UTC)
         departed_at = datetime.now(JST)
         departed_at_str = departed_at.strftime('%Y-%m-%d %H:%M:%S %Z')
         roles = [role.name for role in member.roles if role.name != '@everyone']
         roles_str = '、'.join(roles) if roles else 'なし'
 
-        file_exists = os.path.exists(VOLUNTARY_LEAVES_FILE)
-        try:
-            with open(VOLUNTARY_LEAVES_FILE, 'a', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                if not file_exists:
-                    writer.writerow(['timestamp', 'user_id', 'user_name', 'roles'])
-                writer.writerow([
-                    departed_at.isoformat(),
-                    str(member.id),
-                    member.name,
-                    roles_str
-                ])
-            
-            if SHEETS_ENABLED:
-                await write_voluntary_leaves_to_sheet()
-        except Exception as e:
-            logger.error(f"退会情報のCSV記録中にエラーが発生しました: {e}")
-
+        # Google Sheets に直接書き込み
+        if SHEETS_ENABLED:
+            await write_voluntary_leaves_to_sheet(member, departed_at)
+        
         log_message = [
             '【メンバー退会情報】',
             f'ユーザー名: {member.name}',
@@ -771,54 +1056,25 @@ async def on_member_remove(member):
     except Exception as e:
         logger.error(f'エラー: 退会情報の処理中にエラーが発生しました: {e}')
 
-async def write_voluntary_leaves_to_sheet() -> bool:
-    """自主退会者情報を専用のスプレッドシートに出力する"""
+async def write_voluntary_leaves_to_sheet(member, departed_at) -> bool:
+    """自主退会者情報をスプレッドシートに直接出力"""
     logger.info("=== 自主退会者スプレッドシートへの出力開始 ===")
     
-    if not SHEETS_ENABLED or not MERGED_SHEET_ID or not os.path.exists(VOLUNTARY_LEAVES_FILE):
+    if not SHEETS_ENABLED or not MERGED_SHEET_ID:
         return False
     
-    # data_rows = [] # removed 02/19
-    # headers = ['タイムスタンプ', 'ユーザーID', 'ユーザー名', '退会前のロール']
     headers = ['timestamp', 'user_id', 'user_name', 'roles']
+    roles = [role.name for role in member.roles if role.name != '@everyone']
+    roles_str = '、'.join(roles) if roles else 'なし'
     
-    try:
-        with open(VOLUNTARY_LEAVES_FILE, 'r', encoding='utf-8') as f:
-            csv_reader = csv.DictReader(f)
-            last_row = None # added 02/19
-
-            for row in csv_reader:
-                last_row = row # added 02/19
-
-            timestamp = datetime.fromisoformat(row['timestamp'])
-            if timestamp.tzinfo is None:
-                timestamp = timestamp.replace(tzinfo=UTC)
-            jst_timestamp = timestamp.astimezone(JST)
-            
-            # removed 02/19
-            # data_rows.append([
-            #     jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            #     row['user_id'],
-            #     row['user_name'],
-            #     row['roles']
-            # ])
-
-            # added 02/19
-            # Format the last row data
-            data_row = [
-                jst_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                last_row['user_id'],
-                last_row['user_name'],
-                last_row['roles']
-            ]
+    data_row = [[
+        departed_at.strftime('%Y-%m-%d %H:%M:%S'),
+        str(member.id),
+        member.name,
+        roles_str
+    ]]
     
-    except Exception as e:
-        logger.error(f"自主退会者CSVの読み込み中にエラーが発生しました: {e}")
-        return False
-    
-    sheet_name = "退会者統計"
-    # return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, data_rows, headers=headers) # removed 02/19
-    return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, [data_row], headers=headers) # added 02/19
+    return write_to_sheet_general(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME, data_row, headers=headers)
 
 @bot.event
 async def on_ready():
@@ -831,13 +1087,13 @@ async def on_ready():
     print('\n=== 接続情報 ===')
     monitor_guild = bot.get_guild(int(MONITOR_GUILD_ID))
     if monitor_guild:
-        print(f'  - 名前: {monitor_guild.name}')
+        print(f'  - 監視サーバー名: {monitor_guild.name}')
         print(f'  - メンバー数: {monitor_guild.member_count}')
     
     output_guild = bot.get_guild(int(OUTPUT_GUILD_ID))
     if output_guild:
         channel = output_guild.get_channel(int(OUTPUT_CHANNEL_ID))
-        print(f'  - 名前: {output_guild.name}')
+        print(f'  - 出力サーバー名: {output_guild.name}')
         print(f'  - 出力チャンネル: {channel.name if channel else "見つかりません"}')
     
     schedule_hour = int(SCHEDULE_HOUR)
@@ -854,7 +1110,8 @@ async def on_ready():
     scheduler.start()
     logger.info(f'定期実行の設定が完了しました（毎日{schedule_hour}時{schedule_minute}分に実行）')
     
-    await process_stats()
+    # 03/03消した
+    # await process_stats()
 
 
 
