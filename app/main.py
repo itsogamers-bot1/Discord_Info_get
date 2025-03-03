@@ -779,69 +779,69 @@ async def stats_command(ctx, *, arg: Optional[str] = None):
         await ctx.send("統計情報をただちに収集します...")
         await process_stats(ctx)
 
-@bot.command(name='currentStats')
-async def current_stats_command(ctx):
-    """現在の統計情報を取得して即時送信するコマンド"""
-    await ctx.send("現在の統計情報を収集しています...")
-    await process_current_stats(ctx)
+# @bot.command(name='currentStats')
+# async def current_stats_command(ctx):
+#     """現在の統計情報を取得して即時送信するコマンド"""
+#     await ctx.send("現在の統計情報を収集しています...")
+#     await process_current_stats(ctx)
 
-async def process_current_stats(ctx=None):
-    """現在のDiscordサーバーの統計情報を取得し、即時出力する"""
-    try:
-        stats = await get_guild_stats()  # 現在の統計情報を取得
+# async def process_current_stats(ctx=None):
+#     """現在のDiscordサーバーの統計情報を取得し、即時出力する"""
+#     try:
+#         stats = await get_guild_stats()  # 現在の統計情報を取得
 
-        if stats is None:
-            error_msg = 'エラー: Discord APIからの統計情報の取得に失敗しました。'
-            if ctx:
-                await ctx.send(error_msg)
-            return
+#         if stats is None:
+#             error_msg = 'エラー: Discord APIからの統計情報の取得に失敗しました。'
+#             if ctx:
+#                 await ctx.send(error_msg)
+#             return
 
-        fieldnames = ['DateTime', 'Total Members', 'New Members', 'Total Leaves', 'Voluntary Leaves', 'Forced Leaves', 'Active Members']
-        now_jst = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')  # 現在時刻 (JST)
+#         fieldnames = ['DateTime', 'Total Members', 'New Members', 'Total Leaves', 'Voluntary Leaves', 'Forced Leaves', 'Active Members']
+#         now_jst = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')  # 現在時刻 (JST)
         
-        row_data = {
-            'DateTime': now_jst,
-            'Total Members': stats['current_members'],
-            'New Members': stats['new_members'],
-            'Total Leaves': stats['left_members'],
-            'Voluntary Leaves': stats['voluntary_leaves'],
-            'Forced Leaves': stats['forced_leaves'],
-            'Active Members': stats['active_members']
-        }
+#         row_data = {
+#             'DateTime': now_jst,
+#             'Total Members': stats['current_members'],
+#             'New Members': stats['new_members'],
+#             'Total Leaves': stats['left_members'],
+#             'Voluntary Leaves': stats['voluntary_leaves'],
+#             'Forced Leaves': stats['forced_leaves'],
+#             'Active Members': stats['active_members']
+#         }
 
-        # **Google Sheets に書き込む**
-        # if SHEETS_ENABLED:
-        #     sheet_data = [list(row_data.values())]
-        #     sheet_name = "リアルタイム統計"  # 新しいシート名 (変更可能)
-        #     if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
-        #         logger.info(f'リアルタイム統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+#         # **Google Sheets に書き込む**
+#         # if SHEETS_ENABLED:
+#         #     sheet_data = [list(row_data.values())]
+#         #     sheet_name = "リアルタイム統計"  # 新しいシート名 (変更可能)
+#         #     if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
+#         #         logger.info(f'リアルタイム統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
 
-        # **Discord にメッセージ送信**
-        message = (
-            f"【現在のDiscordサーバーリアルタイム統計情報】\n"
-            f"取得時刻: {now_jst}\n\n"
-            f"1. サーバー状況\n"
-            f"   - 現在のメンバー数: {stats['current_members']}人\n"
-            f"   - 新規参加者数: {stats['new_members']}人\n"
-            f"   - 退会者数: {stats['left_members']}人\n"
-            f"     ├ 自主退会: {stats['voluntary_leaves']}人\n"
-            f"     └ 強制退会: {stats['forced_leaves']}人\n"
-            f"   - アクティブメンバー数: {stats['active_members']}人\n\n"
-            f"※このメッセージは自動生成されています。"
-        )
+#         # **Discord にメッセージ送信**
+#         message = (
+#             f"【現在のDiscordサーバーリアルタイム統計情報】\n"
+#             f"取得時刻: {now_jst}\n\n"
+#             f"1. サーバー状況\n"
+#             f"   - 現在のメンバー数: {stats['current_members']}人\n"
+#             f"   - 新規参加者数: {stats['new_members']}人\n"
+#             f"   - 退会者数: {stats['left_members']}人\n"
+#             f"     ├ 自主退会: {stats['voluntary_leaves']}人\n"
+#             f"     └ 強制退会: {stats['forced_leaves']}人\n"
+#             f"   - アクティブメンバー数: {stats['active_members']}人\n\n"
+#             f"※このメッセージは自動生成されています。"
+#         )
 
-        if ctx:
-            await ctx.send(message)
-        else:
-            output_guild = bot.get_guild(OUTPUT_GUILD_ID)
+#         if ctx:
+#             await ctx.send(message)
+#         else:
+#             output_guild = bot.get_guild(OUTPUT_GUILD_ID)
 
-            if output_guild:
-                channel = output_guild.get_channel(OUTPUT_CHANNEL_ID)
-                if channel:
-                    await channel.send(message)
+#             if output_guild:
+#                 channel = output_guild.get_channel(OUTPUT_CHANNEL_ID)
+#                 if channel:
+#                     await channel.send(message)
 
-    except Exception as e:
-        logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
+#     except Exception as e:
+#         logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
 
 
 @bot.event
