@@ -749,35 +749,35 @@ async def process_stats(ctx=None):
         logger.error(f'✖ エラー: 予期せぬエラーが発生しました: {e}')
 
 # Bot Event Handlers
-@bot.command(name='stats')
-async def stats_command(ctx, *, arg: Optional[str] = None):
-    """統計情報を手動で収集するコマンド"""
-    if arg and "--time" in arg:
-        time_str = arg.replace("--time", "").strip()
-        try:
-            hour, minute = map(int, time_str.split(":"))
-            if not (0 <= hour <= 23 and 0 <= minute <= 59):
-                raise ValueError("Invalid time range")
+# @bot.command(name='stats')
+# async def stats_command(ctx, *, arg: Optional[str] = None):
+#     """統計情報を手動で収集するコマンド"""
+#     if arg and "--time" in arg:
+#         time_str = arg.replace("--time", "").strip()
+#         try:
+#             hour, minute = map(int, time_str.split(":"))
+#             if not (0 <= hour <= 23 and 0 <= minute <= 59):
+#                 raise ValueError("Invalid time range")
             
-            start_date = datetime.now(UTC)
-            target_time = start_date.replace(hour=hour, minute=minute, tzinfo=UTC)
-            if target_time < start_date:
-                start_date = start_date + timedelta(days=1)
+#             start_date = datetime.now(UTC)
+#             target_time = start_date.replace(hour=hour, minute=minute, tzinfo=UTC)
+#             if target_time < start_date:
+#                 start_date = start_date + timedelta(days=1)
             
-            trigger = CronTrigger(hour=hour, minute=minute, start_date=start_date)
-            scheduler.add_job(
-                process_stats,
-                trigger,
-                id='manual_stats_job',
-                replace_existing=True
-            )
-            next_run = start_date.replace(hour=hour, minute=minute)
-            await ctx.send(f"{next_run.strftime('%Y-%m-%d %H:%M')}に統計情報を出力するようスケジュールを設定しました。")
-        except ValueError:
-            await ctx.send("時刻の指定に失敗しました。正しい形式で指定してください。例: !stats --time 15:00")
-    else:
-        await ctx.send("統計情報をただちに収集します...")
-        await process_stats(ctx)
+#             trigger = CronTrigger(hour=hour, minute=minute, start_date=start_date)
+#             scheduler.add_job(
+#                 process_stats,
+#                 trigger,
+#                 id='manual_stats_job',
+#                 replace_existing=True
+#             )
+#             next_run = start_date.replace(hour=hour, minute=minute)
+#             await ctx.send(f"{next_run.strftime('%Y-%m-%d %H:%M')}に統計情報を出力するようスケジュールを設定しました。")
+#         except ValueError:
+#             await ctx.send("時刻の指定に失敗しました。正しい形式で指定してください。例: !stats --time 15:00")
+#     else:
+#         await ctx.send("統計情報をただちに収集します...")
+#         await process_stats(ctx)
 
 # @bot.command(name='currentStats')
 # async def current_stats_command(ctx):
