@@ -73,7 +73,7 @@ intents = discord.Intents.all()
 intents.presences = True
 intents.members = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='/', intents=intents)
 scheduler = AsyncIOScheduler()
 
 # Token retrieval (from bot.py)
@@ -528,35 +528,35 @@ async def process_stats(ctx=None):
         logger.error(f'✖ エラー: 予期せぬエラーが発生しました: {e}')
 
 # Bot Event Handlers
-# @bot.command(name='stats')
-# async def stats_command(ctx, *, arg: Optional[str] = None):
-#     """統計情報を手動で収集するコマンド"""
-#     if arg and "--time" in arg:
-#         time_str = arg.replace("--time", "").strip()
-#         try:
-#             hour, minute = map(int, time_str.split(":"))
-#             if not (0 <= hour <= 23 and 0 <= minute <= 59):
-#                 raise ValueError("Invalid time range")
+@bot.command(name='stats')
+async def stats_command(ctx, *, arg: Optional[str] = None):
+    """統計情報を手動で収集するコマンド"""
+    if arg and "--time" in arg:
+        time_str = arg.replace("--time", "").strip()
+        try:
+            hour, minute = map(int, time_str.split(":"))
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                raise ValueError("Invalid time range")
             
-#             start_date = datetime.now(UTC)
-#             target_time = start_date.replace(hour=hour, minute=minute, tzinfo=UTC)
-#             if target_time < start_date:
-#                 start_date = start_date + timedelta(days=1)
+            start_date = datetime.now(UTC)
+            target_time = start_date.replace(hour=hour, minute=minute, tzinfo=UTC)
+            if target_time < start_date:
+                start_date = start_date + timedelta(days=1)
             
-#             trigger = CronTrigger(hour=hour, minute=minute, start_date=start_date)
-#             scheduler.add_job(
-#                 process_stats,
-#                 trigger,
-#                 id='manual_stats_job',
-#                 replace_existing=True
-#             )
-#             next_run = start_date.replace(hour=hour, minute=minute)
-#             await ctx.send(f"{next_run.strftime('%Y-%m-%d %H:%M')}に統計情報を出力するようスケジュールを設定しました。")
-#         except ValueError:
-#             await ctx.send("時刻の指定に失敗しました。正しい形式で指定してください。例: !stats --time 15:00")
-#     else:
-#         await ctx.send("統計情報をただちに収集します...")
-#         await process_stats(ctx)
+            trigger = CronTrigger(hour=hour, minute=minute, start_date=start_date)
+            scheduler.add_job(
+                process_stats,
+                trigger,
+                id='manual_stats_job',
+                replace_existing=True
+            )
+            next_run = start_date.replace(hour=hour, minute=minute)
+            await ctx.send(f"{next_run.strftime('%Y-%m-%d %H:%M')}に統計情報を出力するようスケジュールを設定しました。")
+        except ValueError:
+            await ctx.send("時刻の指定に失敗しました。正しい形式で指定してください。例: !stats --time 15:00")
+    else:
+        await ctx.send("統計情報をただちに収集します...")
+        await process_stats(ctx)
 
 # @bot.command(name='currentStats')
 # async def current_stats_command(ctx):
@@ -675,7 +675,7 @@ async def on_member_remove(member):
         departed_at = datetime.now(JST)
         departed_at_str = departed_at.strftime('%Y-%m-%d %H:%M:%S %Z')
         roles = [role.name for role in member.roles if role.name != '@everyone']
-        roles_str = '、'.join(roles) if roles else 'なし'
+        roles_str = ','.join(roles) if roles else 'なし'
 
         # Google Sheets に直接書き込み
         if SHEETS_ENABLED:
@@ -818,4 +818,3 @@ except Exception as e:
     print("エラー: 予期せぬ問題が発生しました")
     print(f"エラーの種類: {type(e).__name__}")
     print(f"エラーの詳細: {str(e)}")
-
