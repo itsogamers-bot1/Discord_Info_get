@@ -180,7 +180,7 @@ def write_to_sheet_general(target_spreadsheet_id: str, sheet_name: str, values: 
     """指定されたスプレッドシートの指定シートにデータを書き込む"""
     try:
         logger.info(f'===[START] Writing to Google Sheet "{sheet_name}" (Spreadsheet ID: {target_spreadsheet_id})===')
-        
+
         service = get_google_sheets_service()
         if not service:
             logger.error('Google Sheetsサービスの初期化に失敗したため、データを書き込めません')
@@ -190,7 +190,7 @@ def write_to_sheet_general(target_spreadsheet_id: str, sheet_name: str, values: 
         try:
             spreadsheet = service.spreadsheets().get(spreadsheetId=target_spreadsheet_id).execute()
             existing_sheets = [sheet['properties']['title'] for sheet in spreadsheet.get('sheets', [])]
-            
+
             # シートが存在しない場合は作成
             if sheet_name not in existing_sheets:
                 logger.info(f'シート"{sheet_name}"が存在しないため、新規作成します')
@@ -219,7 +219,7 @@ def write_to_sheet_general(target_spreadsheet_id: str, sheet_name: str, values: 
             if not values:
                 logger.error('書き込むデータが空です')
                 return False
-                
+
             if next_row == 1 and headers:
                 values = [headers] + values
                 range_name = f'{sheet_name}!A1'
@@ -230,21 +230,31 @@ def write_to_sheet_general(target_spreadsheet_id: str, sheet_name: str, values: 
             'values': values
         }
 
-        service.spreadsheets().values().append(
-            spreadsheetId=target_spreadsheet_id,
-            range=range_name,
-            valueInputOption='RAW',
-            insertDataOption='INSERT_ROWS',
-            body=body
-        ).execute()
-        
-        logger.info(f'✅ "{sheet_name}"シートへのデータ書き込みが完了しました')
+        if "A1" in range_name:  # **ヘッダーならupdate()で上書き**
+            service.spreadsheets().values().update(
+                spreadsheetId=target_spreadsheet_id,
+                range=range_name,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+            logger.info(f'✅ ヘッダー情報を"{sheet_name}"に上書きしました')
+        else:  # **通常データならappend()で追加**
+            service.spreadsheets().values().append(
+                spreadsheetId=target_spreadsheet_id,
+                range=range_name,
+                valueInputOption='RAW',
+                insertDataOption='INSERT_ROWS',
+                body=body
+            ).execute()
+            logger.info(f'✅ "{sheet_name}"にデータを追加しました')
+
         logger.info(f'===[COMPLETE] Successfully wrote {len(values)} rows to {sheet_name}===')
         return True
     except HttpError as e:
         logger.error(f'✖ Google Sheetsへの書き込み中にエラーが発生しました: {e}')
         logger.error(f'===[FAILED] Failed to write to {sheet_name}===')
         return False
+
 
 def write_to_sheet(sheet_name: str, values: List[List[Any]], range_name: Optional[str] = None, headers: Optional[List[str]] = None) -> bool:
     """指定されたシートにデータを書き込む（デフォルトのスプレッドシートを使用）"""
@@ -435,22 +445,79 @@ async def get_guild_stats():
         logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
         return None
 
+# async def get_role_stats(guild: discord.Guild):
+#     """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する"""
+#     try:
+#         current_date = (datetime.now(JST) - timedelta(days=1)).strftime('%Y-%m-%d')
+        
+#         # ロールのメンバー数を取得
+#         role_data = {role.name: len(role.members) for role in guild.roles if not role.is_default()}
+        
+#         # シートに書き込むデータの準備
+#         fieldnames = ['Date'] + sorted(role_data.keys())  # ヘッダー
+#         sheet_data = [[current_date] + [role_data[role] for role in sorted(role_data.keys())]]
+        
+#         # Google Sheets に書き込み
+#         sheet_name = ROLE_STATS_SHEET_NAME
+#         if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
+#             logger.info(f'✅ ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+#         else:
+#             logger.warning('⚠ Google Sheetsへの書き込みに失敗しました')
+
+#         return True
+
+#     except Exception as e:
+#         logger.error(f'✖ ロール統計情報の処理中にエラーが発生しました: {e}')
+#         return False
+
+
 async def get_role_stats(guild: discord.Guild):
-    """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する"""
+    """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する (ロールIDを基準に保存)"""
     try:
         current_date = (datetime.now(JST) - timedelta(days=1)).strftime('%Y-%m-%d')
         
-        # ロールのメンバー数を取得
-        role_data = {role.name: len(role.members) for role in guild.roles if not role.is_default()}
+        # 取得するロールデータ（IDをキーにする）
+        role_data = {str(role.id): (role.name, len(role.members)) for role in guild.roles if not role.is_default()}
         
-        # シートに書き込むデータの準備
-        fieldnames = ['Date'] + sorted(role_data.keys())  # ヘッダー
-        sheet_data = [[current_date] + [role_data[role] for role in sorted(role_data.keys())]]
-        
-        # Google Sheets に書き込み
-        sheet_name = ROLE_STATS_SHEET_NAME
-        if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
-            logger.info(f'✅ ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
+        # Google Sheets から既存データを取得
+        existing_data = read_from_sheet(MERGED_SHEET_ID, ROLE_STATS_SHEET_NAME) or [[""], ["Date"]]
+
+        # **既存のヘッダーを取得**
+        existing_role_ids = existing_data[0] if len(existing_data) > 0 else [""]
+        existing_role_names = existing_data[1] if len(existing_data) > 1 else ["Date"]
+
+        # **最初の列（A列）を正しく設定**
+        existing_role_ids[0] = ""
+        existing_role_names[0] = "Date"
+
+        updated = False
+
+        # **ロールIDと名前を更新**
+        for role_id, (role_name, _) in role_data.items():
+            if role_id not in existing_role_ids:
+                existing_role_ids.append(role_id)
+                existing_role_names.append(role_name)
+                updated = True
+            else:
+                idx = existing_role_ids.index(role_id)
+                if existing_role_names[idx] != role_name:
+                    existing_role_names[idx] = role_name
+                    updated = True
+
+        # **ヘッダーを正しく上書き**
+        if updated:
+            write_to_sheet(ROLE_STATS_SHEET_NAME, [existing_role_ids, existing_role_names], range_name=f'{ROLE_STATS_SHEET_NAME}!A1')
+
+        # **データ行の作成**
+        new_row = [current_date] + [role_data.get(role_id, ('', 0))[1] for role_id in existing_role_ids[1:]]
+
+        # **次の空き行を特定**
+        data_start_row = 3  # データは3行目から開始
+        next_row_index = max(data_start_row, len(existing_data) + 1)
+
+        # **データを追加**
+        if write_to_sheet(ROLE_STATS_SHEET_NAME, [new_row], range_name=f'{ROLE_STATS_SHEET_NAME}!A{next_row_index}'):
+            logger.info(f'✅ ロール統計情報をGoogle Sheetsに出力しました (シート名: {ROLE_STATS_SHEET_NAME})')
         else:
             logger.warning('⚠ Google Sheetsへの書き込みに失敗しました')
 
@@ -459,6 +526,8 @@ async def get_role_stats(guild: discord.Guild):
     except Exception as e:
         logger.error(f'✖ ロール統計情報の処理中にエラーが発生しました: {e}')
         return False
+
+
 
 async def process_stats(ctx=None):
     """統計情報の収集、Google Sheets出力、送信を行う"""
@@ -528,7 +597,7 @@ async def process_stats(ctx=None):
         logger.error(f'✖ エラー: 予期せぬエラーが発生しました: {e}')
 
 # Bot Event Handlers
-@bot.command(name='stats')
+@bot.command(name='stats', description="定時実行を今実行")
 async def stats_command(ctx, *, arg: Optional[str] = None):
     """統計情報を手動で収集するコマンド"""
     if arg and "--time" in arg:
