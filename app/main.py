@@ -263,9 +263,11 @@ def write_to_sheet(sheet_name: str, values: List[List[Any]], range_name: Optiona
         return False
     return write_to_sheet_general(MERGED_SHEET_ID, sheet_name, values, range_name, headers=headers)
 
-def write_to_spreadsheet(username: str, status: str, error_message: str = "", current_roles: str = "") -> bool:
+# join
+def write_to_spreadsheet(userid: str, username: str, status: str, error_message: str = "", current_roles: str = "") -> bool:
     """ユーザーのロール情報をスプレッドシートに記録する（オンボーディング用）"""
     print("\n=== スプレッドシート書き込み開始 ===")
+    print(f"- ユーザーID: {userid}")
     print(f"- ユーザー名: {username}")
     print(f"- ステータス: {status}")
     print(f"- エラー: {error_message if error_message else 'なし'}")
@@ -279,7 +281,7 @@ def write_to_spreadsheet(username: str, status: str, error_message: str = "", cu
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"- タイムスタンプ: {timestamp}")
         
-        row = [timestamp, username, status, error_message, current_roles]
+        row = [timestamp, userid, username, status, error_message, current_roles]
         range_name = f'{JOIN_INFO_SHEET_NAME}!A:A'
         body = {
             'values': [row]
@@ -570,16 +572,16 @@ async def process_stats(ctx=None):
 
         # Discordメッセージを送信
         message = (
-            f"【Discordサーバー統計情報】\n"
+            f"【サーバー統計情報】\n"
             f"日付: {stats['date']}\n\n"
-            f"1. サーバー状況\n"
+            f"サーバー状況\n"
             f"   - 現在のメンバー数: {stats['current_members']}人\n"
             f"   - 新規参加者数: {stats['new_members']}人\n"
             f"   - 退会者数: {stats['left_members']}人\n"
             f"     ├ 自主退会: {stats['voluntary_leaves']}人\n"
             f"     └ 強制退会: {stats['forced_leaves']}人\n"
-            f"   - アクティブメンバー数: {stats['active_members']}人\n\n"
-            f"※このメッセージは自動生成されています。"
+            f"   - アクティブメンバー数: {stats['active_members']}人\n"
+            f"ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー"
         )
 
         if ctx:
@@ -597,7 +599,7 @@ async def process_stats(ctx=None):
         logger.error(f'✖ エラー: 予期せぬエラーが発生しました: {e}')
 
 # Bot Event Handlers
-@bot.command(name='stats', description="定時実行を今実行")
+@bot.command(name='stats', description="サーバー統計情報を収集、スプシとディスコで出力")
 async def stats_command(ctx, *, arg: Optional[str] = None):
     """統計情報を手動で収集するコマンド"""
     if arg and "--time" in arg:
@@ -707,11 +709,13 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             
         if not before.flags.completed_onboarding and after.flags.completed_onboarding:
             try:
+                user_id = str(after.id)
                 display_name = after.display_name
                 roles_list = [role.name for role in after.roles if not role.is_default()]
                 roles_str = ",".join(roles_list)
                 
                 write_to_spreadsheet(
+                    userid=user_id,
                     username=display_name,
                     status="SUCCESS",
                     current_roles=roles_str
@@ -724,6 +728,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
                     display_name = "不明なユーザー"
                 
                 write_to_spreadsheet(
+                    userid=user_id,
                     username=display_name,
                     status="ERROR",
                     error_message=error_message
@@ -751,9 +756,9 @@ async def on_member_remove(member):
             await write_voluntary_leaves_to_sheet(member, departed_at)
         
         log_message = [
-            '【メンバー退会情報】',
-            f'ユーザー名: {member.name}',
+            '【退会情報】',
             f'ユーザーID: {member.id}',
+            f'ユーザー名: {member.name}',
             f'退会日時: {departed_at_str}',
             f'保持していたロール: {roles_str}'
         ]
@@ -781,6 +786,7 @@ async def on_member_remove(member):
             if output_guild:
                 channel = output_guild.get_channel(output_channel_id)
                 if channel:
+                    log_message.append('ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー')
                     await channel.send('\n'.join(log_message))
         except Exception as e:
             logger.error(f'エラー: メッセージの送信中にエラーが発生しました: {e}')
