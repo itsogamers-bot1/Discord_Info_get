@@ -736,6 +736,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
     except Exception as e:
         error_message = f"オンボーディング処理中にエラーが発生しました: {type(e).__name__} - {str(e)}"
         write_to_spreadsheet(
+            userid="",
             username="不明なユーザー",
             status="ERROR",
             error_message=error_message
