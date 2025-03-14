@@ -26,6 +26,12 @@ from apscheduler.triggers.cron import CronTrigger
 import dotenv
 from server import server_thread
 
+from threading import Thread
+import threading
+import time
+import logging
+import requests  # HTTP リクエスト用
+
 # Load environment variables
 BASE_DIR = os.getcwd()
 # load_dotenv(os.path.join(BASE_DIR, '.env'))
@@ -854,7 +860,6 @@ async def on_ready():
     # await process_stats()
 
 # Main execution
-
 # if __name__ == "__main__":
 #     if not TOKEN:
 #         print("エラー: 有効なトークンが見つかりませんでした。")
@@ -872,7 +877,65 @@ async def on_ready():
 #         sys.exit(1)
         
 # server_id = os.getenv("MONITOR_GUILD_ID")
+
 server_thread()
+
+# koyeb sleep対策
+# logger = logging.getLogger('koyeb_keepalive')
+
+# スレッド停止用イベント
+stop_event = threading.Event()
+
+def keep_alive():
+    """
+    Koyebインスタンスがスリープしないようにキープアライブ信号を送信するスレッド関数
+    """
+    minutes = 0
+    while not stop_event.is_set():
+        if minutes % 15 == 0:  # 15分ごとにログを出力
+            logger.info(f"Keepalive: {minutes} minutes elapsed - Koyeb instance active")
+        
+        # HTTPサーバーにリクエストを送信
+        try:
+            requests.get("http://localhost:8080/", timeout=5)
+            if minutes % 5 == 0:  # 5分ごとにアクセスログを出力
+                logger.info("Keepalive: Sent request to own HTTP server")
+                print("Keepalive: Sent request to own HTTP server")
+        except Exception as e:
+            logger.error(f"Error accessing HTTP server: {e}")
+            
+        # ファイルシステムに書き込み
+        try:
+            with open("keepalive.txt", "w") as f:
+                f.write(f"Keepalive timestamp: {time.time()}")
+            if minutes % 10 == 0:  # 10分ごとにファイル書き込みログを出力
+                logger.info("Keepalive: Wrote to filesystem")
+                print("Keepalive: Wrote to filesystem")
+        except Exception as e:
+            logger.error(f"Error writing to filesystem: {e}")
+        
+        time.sleep(30)  # 30秒間隔でスレッド実行（頻度を上げました）
+        minutes += 0.5  # 30秒 = 0.5分
+        
+        # CPU負荷を少し発生させる
+        if minutes % 5 == 0:  # 5分ごとに軽いCPU負荷を発生
+            _ = [i * i for i in range(10000)]  # 簡単な計算
+            logger.info("Keepalive: Generated CPU activity")
+            print("Keepalive: Generated CPU activity")
+
+# キープアライブスレッド起動関数
+def start_keepalive_thread():
+    """
+    キープアライブスレッドを起動する関数
+    """
+    thread = threading.Thread(target=keep_alive, daemon=True)
+    thread.start()
+    logger.info("Keepalive thread started")
+    return thread            
+
+# キープアライブスレッドの起動
+keepalive_thread = start_keepalive_thread()
+
 server_id = MONITOR_GUILD_ID
 TOKEN = DISCORD_BOT_TOKEN
 if not server_id:
@@ -894,3 +957,13 @@ except Exception as e:
     print("エラー: 予期せぬ問題が発生しました")
     print(f"エラーの種類: {type(e).__name__}")
     print(f"エラーの詳細: {str(e)}")
+finally:
+        # スレッド停止フラグをセット
+        stop_event.set()
+        logger.info("Bot shutdown complete")
+        
+        # 必要に応じて短時間待機してからプログラム終了
+        time.sleep(2)
+
+
+
