@@ -60,7 +60,7 @@ SCHEDULE_MINUTE = int(os.getenv('SCHEDULE_MINUTE', '0'))
 
 # Constants
 JST = ZoneInfo("Asia/Tokyo")
-UTC = timezone.utc
+# UTC = timezone.utc
 LOG_FILE = os.path.join(BASE_DIR, 'discord_bot.log')
 
 # Initialize logging
@@ -334,7 +334,7 @@ async def get_guild_stats():
         join_count = 0
         for member in guild.members:
             if member.joined_at:
-                joined_at = member.joined_at.replace(tzinfo=UTC) if member.joined_at.tzinfo is None else member.joined_at
+                joined_at = member.joined_at.replace(tzinfo=JST) if member.joined_at.tzinfo is None else member.joined_at
                 if yesterday_start <= joined_at <= yesterday_end:
                     join_count += 1
         
@@ -366,7 +366,7 @@ async def get_guild_stats():
                         break
                         
                     for entry in entries:
-                        created_at = entry.created_at.replace(tzinfo=UTC) if entry.created_at and entry.created_at.tzinfo is None else entry.created_at
+                        created_at = entry.created_at.replace(tzinfo=JST) if entry.created_at and entry.created_at.tzinfo is None else entry.created_at
                         
                         if not created_at or created_at > yesterday_end:
                             break
@@ -410,7 +410,7 @@ async def get_guild_stats():
                 try:
                     leave_time = datetime.fromisoformat(row[timestamp_index])
                     if leave_time.tzinfo is None:
-                        leave_time = leave_time.replace(tzinfo=UTC)
+                        leave_time = leave_time.replace(tzinfo=JST)
 
                     user_id = row[user_id_index]
                     if yesterday_start <= leave_time <= yesterday_end:
@@ -615,8 +615,8 @@ async def stats_command(ctx, *, arg: Optional[str] = None):
             if not (0 <= hour <= 23 and 0 <= minute <= 59):
                 raise ValueError("Invalid time range")
             
-            start_date = datetime.now(UTC)
-            target_time = start_date.replace(hour=hour, minute=minute, tzinfo=UTC)
+            start_date = datetime.now(JST)
+            target_time = start_date.replace(hour=hour, minute=minute, tzinfo=JST)
             if target_time < start_date:
                 start_date = start_date + timedelta(days=1)
             
@@ -964,6 +964,3 @@ finally:
         
         # 必要に応じて短時間待機してからプログラム終了
         time.sleep(2)
-
-
-
