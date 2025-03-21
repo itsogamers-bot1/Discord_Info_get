@@ -453,31 +453,6 @@ async def get_guild_stats():
         logger.error(f'エラー: 予期せぬエラーが発生しました: {e}')
         return None
 
-# async def get_role_stats(guild: discord.Guild):
-#     """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する"""
-#     try:
-#         current_date = (datetime.now(JST) - timedelta(days=1)).strftime('%Y-%m-%d')
-        
-#         # ロールのメンバー数を取得
-#         role_data = {role.name: len(role.members) for role in guild.roles if not role.is_default()}
-        
-#         # シートに書き込むデータの準備
-#         fieldnames = ['Date'] + sorted(role_data.keys())  # ヘッダー
-#         sheet_data = [[current_date] + [role_data[role] for role in sorted(role_data.keys())]]
-        
-#         # Google Sheets に書き込み
-#         sheet_name = ROLE_STATS_SHEET_NAME
-#         if write_to_sheet(sheet_name, sheet_data, headers=fieldnames):
-#             logger.info(f'✅ ロール統計情報をGoogle Sheetsに出力しました (シート名: {sheet_name})')
-#         else:
-#             logger.warning('⚠ Google Sheetsへの書き込みに失敗しました')
-
-#         return True
-
-#     except Exception as e:
-#         logger.error(f'✖ ロール統計情報の処理中にエラーが発生しました: {e}')
-#         return False
-
 
 async def get_role_stats(guild: discord.Guild):
     """サーバー内のロールごとのメンバー数をGoogle Sheetsに出力する (ロールIDを基準に保存)"""
