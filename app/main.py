@@ -325,6 +325,10 @@ async def get_guild_stats():
             print('エラー: ギルドが見つかりませんでした。')
             return None
         
+        if not SHEETS_ENABLED:
+            logger.warning("Google Sheetsが有効になっていません。")
+            return
+        
         now = datetime.now(JST)
         yesterday_start = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=JST)
         yesterday_end = (now - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=JST)
@@ -332,11 +336,44 @@ async def get_guild_stats():
         current_members = guild.member_count
         
         join_count = 0
-        for member in guild.members:
-            if member.joined_at:
-                joined_at = member.joined_at.replace(tzinfo=JST) if member.joined_at.tzinfo is None else member.joined_at
-                if yesterday_start <= joined_at <= yesterday_end:
-                    join_count += 1
+
+        # old join count removed 04/04
+        # for member in guild.members:
+        #     if member.joined_at:
+        #         joined_at = member.joined_at.replace(tzinfo=JST) if member.joined_at.tzinfo is None else member.joined_at
+        #         if yesterday_start <= joined_at <= yesterday_end:
+        #             join_count += 1
+
+        # new join count added 04/04
+        try:
+            
+            sheet_data = read_from_sheet(MERGED_SHEET_ID, JOIN_INFO_SHEET_NAME)
+            if not sheet_data or len(sheet_data) < 2:
+                logger.warning(f"シート {JOIN_INFO_SHEET_NAME} にデータがありません。")
+                return
+            
+            header = sheet_data[0]  # ヘッダー行
+            rows = sheet_data[2:]   # データ行
+            timestamp_index = header.index('timestamp')
+
+            join_count = 0
+            for row in rows:
+                try:
+                    join_time = datetime.fromisoformat(row[timestamp_index])
+                    if join_time.tzinfo is None:
+                        join_time = join_time.replace(tzinfo=JST)
+
+                    if yesterday_start <= join_time <= yesterday_end:
+                        join_count += 1
+                except (ValueError, IndexError) as e:
+                    logger.error(f"参加データの解析中にエラーが発生しました: {e}")
+                    continue
+
+            logger.info(f"昨日の参加者数: {join_count}")
+
+        except Exception as e:
+            logger.error(f"Google Sheets ({JOIN_INFO_SHEET_NAME}) の読み込み中にエラーが発生しました: {e}")
+
         
         leave_count = 0
         voluntary_leave_count = 0
@@ -390,10 +427,6 @@ async def get_guild_stats():
 
 
         """Google Sheetsから自主退会データを読み込み、前日の退会者数をカウントする"""
-        if not SHEETS_ENABLED:
-            logger.warning("Google Sheetsが有効になっていません。")
-            return
-        
         try:
             sheet_data = read_from_sheet(MERGED_SHEET_ID, VOLUNTARY_LEAVES_SHEET_NAME)
             if not sheet_data or len(sheet_data) < 2:
